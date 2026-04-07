@@ -52,8 +52,9 @@ namespace ApiControleEstoque.Models
 
     public class LoginRequest
     {
-        public string? Nome { get; set; }
-        public string? Email { get; set; }
+        [Required(ErrorMessage = "O Email do Funcionário é obrigatório.")]
+
+        public string Email { get; set; }
 
         [Required(ErrorMessage = "A Senha é obrigatória.")]
         public string Senha { get; set; } = string.Empty;

@@ -1,4 +1,5 @@
 using ApiControleEstoque.Models;
+using ApiControleEstoque.Models.ViewModels;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -18,32 +19,32 @@ namespace ApiControleEstoque.Repository
         }
 
         // Lista todas as compras com os nomes dos produtos e fornecedores (JOINs).
-        public static async Task<List<Compras>> GetAllComprasAsync()
+        public static async Task<List<ComprasViewModel>> GetAllComprasAsync()
         {
             var query = @"
                 SELECT c.IdCompra, c.IdFornecedor, c.IdProduto, c.Data, c.Quantidade,
-                       f.Nome AS FornecedorNome, p.Descricao AS ProdutoDescricao, p.CodBarra AS CodBarra
+                       f.Nome AS FornecedorNome, p.Descricao AS ProdutoDescricao, p.CodBarras AS CodBarras
                 FROM Compras c
                 LEFT JOIN Fornecedores f ON c.IdFornecedor = f.IdFornecedor
                 LEFT JOIN Produtos p ON c.IdProduto = p.IdProduto";
             using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Compras>(query);
+            var list = await connection.QueryAsync<ComprasViewModel>(query);
             return list.AsList();
         }
 
         // Busca uma compra específica por ID com dados detalhados.
-        public static async Task<Compras?> GetByIdComprasAsync(long idCompra)
+        public static async Task<ComprasViewModel?> GetByIdComprasAsync(long idCompra)
         {
             if (idCompra <= 0) return null;
             var query = @"
                 SELECT c.IdCompra, c.IdFornecedor, c.IdProduto, c.Data, c.Quantidade,
-                       f.Nome AS FornecedorNome, p.Descricao AS ProdutoDescricao, p.CodBarra AS CodBarra
+                       f.Nome AS FornecedorNome, p.Descricao AS ProdutoDescricao, p.CodBarras AS CodBarras
                 FROM Compras c
                 LEFT JOIN Fornecedores f ON c.IdFornecedor = f.IdFornecedor
                 LEFT JOIN Produtos p ON c.IdProduto = p.IdProduto
                 WHERE c.IdCompra = @idCompra";
             using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryFirstOrDefaultAsync<Compras>(query, new { idCompra });
+            return await connection.QueryFirstOrDefaultAsync<ComprasViewModel>(query, new { idCompra });
         }
 
         // Filtra compras de um fornecedor específico.
@@ -76,27 +77,27 @@ namespace ApiControleEstoque.Repository
         }
 
         // Retorna uma ficha técnica completa da compra (incluindo CNPJ e detalhes).
-        public static async Task<Compras?> GetCompraCompletaAsync(long idCompra)
+        public static async Task<ComprasViewModel?> GetCompraCompletaAsync(long idCompra)
         {
             if (idCompra <= 0) return null;
             var query = @"
                 SELECT c.IdCompra, c.Data, c.Quantidade,
                        f.IdFornecedor, f.Nome AS FornecedorNome, f.CNPJ,
-                       p.IdProduto, p.Descricao AS ProdutoDescricao, p.CodBarra AS CodBarra
+                       p.IdProduto, p.Descricao AS ProdutoDescricao, p.CodBarras AS CodBarras
                 FROM Compras c
                 INNER JOIN Fornecedores f ON c.IdFornecedor = f.IdFornecedor
                 INNER JOIN Produtos p ON c.IdProduto = p.IdProduto
                 WHERE c.IdCompra = @idCompra";
 
             using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryFirstOrDefaultAsync<Compras>(query, new { idCompra });
+            return await connection.QueryFirstOrDefaultAsync<ComprasViewModel>(query, new { idCompra });
         }
 
         // Pesquisa compras usando filtros cruzados enviados via JSON (POST).
-        public static async Task<List<Compras>> ConsultarPorTudoAsync(FiltroParaCompra filtro)
+        public static async Task<List<ComprasViewModel>> ConsultarPorTudoAsync(FiltroParaCompra filtro)
         {
             var query = @"
-                SELECT c.*, f.Nome AS FornecedorNome, p.Descricao AS ProdutoDescricao
+                SELECT c.*, f.Nome AS FornecedorNome, p.Descricao AS ProdutoDescricao, p.CodBarras
                 FROM Compras c
                 INNER JOIN Fornecedores f ON c.IdFornecedor = f.IdFornecedor
                 INNER JOIN Produtos p ON c.IdProduto = p.IdProduto
@@ -107,7 +108,7 @@ namespace ApiControleEstoque.Repository
                   AND (@QtdeMin IS NULL OR c.Quantidade >= @QtdeMin)";
             
             using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Compras>(query, new { 
+            var list = await connection.QueryAsync<ComprasViewModel>(query, new { 
                 DataInicio = filtro.DataInicio, 
                 DataFim = filtro.DataFim,
                 IdProduto = filtro.IdProduto,

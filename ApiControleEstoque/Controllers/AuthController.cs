@@ -14,7 +14,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var funcionario = await AuthRepository.AuthenticateFuncionarioAsync(request.Nome ?? "", request.Email ?? "", request.Senha);
+                var funcionario = await AuthRepository.AuthenticateFuncionarioAsync(request.Email, request.Senha);
 
                 if (funcionario == null)
                     return Unauthorized(new { message = "Usuário ou Senha inválidos." });

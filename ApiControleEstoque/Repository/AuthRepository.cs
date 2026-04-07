@@ -19,13 +19,12 @@ namespace ApiControleEstoque.Repository
         }
 
         // Realiza o Login comparando a senha digitada.
-        public static async Task<Funcionarios?> AuthenticateFuncionarioAsync(string nome, string email, string senha)
+        public static async Task<Funcionarios?> AuthenticateFuncionarioAsync( string email, string senha)
         {
-            if (string.IsNullOrWhiteSpace(senha)) return null;
-            if (string.IsNullOrWhiteSpace(nome) && string.IsNullOrWhiteSpace(email)) return null;
+            if (string.IsNullOrWhiteSpace(senha) || string.IsNullOrWhiteSpace(email)) return null;
 
             using var connection = new SqlConnection(_connectionString);
-            var funcionario = await FuncionariosRepository.GetByEmailOrNomeFuncionarioAsync(email, nome);
+            var funcionario = await FuncionariosRepository.GetByEmailFuncionarioAsync(email);
 
             if (funcionario == null) return null;
 

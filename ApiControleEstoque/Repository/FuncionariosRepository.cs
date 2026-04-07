@@ -1,4 +1,5 @@
 using ApiControleEstoque.Models;
+using ApiControleEstoque.Models.ViewModels;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -36,12 +37,12 @@ namespace ApiControleEstoque.Repository
             return await connection.QueryFirstOrDefaultAsync<Funcionarios>(query, new { IdFuncionario = idFuncionario });
         }
 
-        public static async Task<Funcionarios?> GetByEmailOrNomeFuncionarioAsync(string email, string nome)
+        public static async Task<Funcionarios?> GetByEmailFuncionarioAsync(string email)
         {
-            if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(nome)) return null;
-            string query = "SELECT * FROM Funcionarios WHERE Email = @Email OR Nome = @Nome";
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            string query = "SELECT * FROM Funcionarios WHERE Email = @Email";
             using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryFirstOrDefaultAsync<Funcionarios>(query, new { Email = email, Nome = nome });
+            return await connection.QueryFirstOrDefaultAsync<Funcionarios>(query, new { Email = email });
         }
 
         public static async Task<Funcionarios?> GetByEmailAsync(string email)
@@ -70,9 +71,9 @@ namespace ApiControleEstoque.Repository
             return list.AsList();
         }
 
-        public static async Task<object> ListarMovimentacoesDoFuncionarioAsync(long idFuncionario)
+        public static async Task<List<FuncionarioMovimentacaoViewModel>> ListarMovimentacoesDoFuncionarioAsync(long idFuncionario)
         {
-            if (idFuncionario <= 0) return new List<dynamic>();
+            if (idFuncionario <= 0) return new List<FuncionarioMovimentacaoViewModel>();
             string query = @"
                 SELECT m.IdMovimentacaoEstoque, m.Quantidade, m.DataHora, 
                        p.Descricao AS Produto, e.Descricao AS Estoque, tm.Descricao AS TipoMovimentacao
@@ -85,7 +86,8 @@ namespace ApiControleEstoque.Repository
                 ORDER BY m.DataHora DESC";
 
             using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryAsync<dynamic>(query, new { IdFuncionario = idFuncionario });
+            var list = await connection.QueryAsync<FuncionarioMovimentacaoViewModel>(query, new { IdFuncionario = idFuncionario });
+            return list.AsList();
         }
 
         public static async Task<List<Funcionarios>> ConsultarPorFiltroAsync(long? id, string? nome, string? setor, string? email)

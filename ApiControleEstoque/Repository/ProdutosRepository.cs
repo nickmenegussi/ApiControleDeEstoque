@@ -1,4 +1,5 @@
 using ApiControleEstoque.Models;
+using ApiControleEstoque.Models.ViewModels;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -19,7 +20,7 @@ namespace ApiControleEstoque.Repository
 
         public static async Task<List<Produtos>> GetAllProdutosAsync()
         {
-            var query = "SELECT IdProduto, CodBarra, Descricao FROM Produtos";
+            var query = "SELECT IdProduto, CodBarras, Descricao FROM Produtos";
             using var connection = new SqlConnection(_connectionString);
             var list = await connection.QueryAsync<Produtos>(query);
             return list.AsList();
@@ -28,63 +29,63 @@ namespace ApiControleEstoque.Repository
         public static async Task<Produtos?> GetByIdAsync(long idProduto)
         {
             if (idProduto <= 0) return null;
-            var query = "SELECT IdProduto, CodBarra, Descricao FROM Produtos WHERE IdProduto = @idProduto";
+            var query = "SELECT IdProduto, CodBarras, Descricao FROM Produtos WHERE IdProduto = @idProduto";
             using var connection = new SqlConnection(_connectionString);
             var produto = await connection.QueryFirstOrDefaultAsync<Produtos>(query, new { idProduto });
             return produto;
         }
 
-        public static async Task<bool> ExistsCodBarraAsync(string codBarra, long? idAtual = null)
+        public static async Task<bool> ExistsCodBarraAsync(string CodBarras, long? idAtual = null)
         {
-            var query = "SELECT COUNT(1) FROM Produtos WHERE CodBarra = @codBarra";
+            var query = "SELECT COUNT(1) FROM Produtos WHERE CodBarras = @CodBarras";
             if (idAtual != null) query += " AND IdProduto != @idAtual";
 
             using var connection = new SqlConnection(_connectionString);
-            var count = await connection.ExecuteScalarAsync<int>(query, new { codBarra, idAtual });
+            var count = await connection.ExecuteScalarAsync<int>(query, new { CodBarras, idAtual });
             return count > 0;
         }
 
         public static async Task<int> CreateProdutoAsync(Produtos produto)
         {
-            if (string.IsNullOrWhiteSpace(produto.CodBarra) || string.IsNullOrWhiteSpace(produto.Descricao))
+            if (string.IsNullOrWhiteSpace(produto.CodBarras) || string.IsNullOrWhiteSpace(produto.Descricao))
                 return -1; // Dados inválidos
 
-            var existsCodBarra = await ExistsCodBarraAsync(produto.CodBarra);
+            var existsCodBarra = await ExistsCodBarraAsync(produto.CodBarras);
             if (existsCodBarra) return 0; // Já existe
 
-            var query = "INSERT INTO Produtos (CodBarra, Descricao) VALUES (@CodBarra, @Descricao)";
+            var query = "INSERT INTO Produtos (CodBarras, Descricao) VALUES (@CodBarras, @Descricao)";
             using var connection = new SqlConnection(_connectionString);
-            return await connection.ExecuteAsync(query, produto);
+            return await connection.ExecuteAsync(query, new { produto.CodBarras, produto.Descricao});
         }
 
         public static async Task<int> UpdateProdutoAsync(Produtos produto)
         {
             if (produto.IdProduto <= 0) return 0;
-            if (string.IsNullOrWhiteSpace(produto.CodBarra) || string.IsNullOrWhiteSpace(produto.Descricao))
+            if (string.IsNullOrWhiteSpace(produto.CodBarras) || string.IsNullOrWhiteSpace(produto.Descricao))
                 return -1; // Dados inválidos
 
-            var existsCodBarra = await ExistsCodBarraAsync(produto.CodBarra, produto.IdProduto);
+            var existsCodBarra = await ExistsCodBarraAsync(produto.CodBarras, produto.IdProduto);
             if (existsCodBarra) return 0; // Já existe
 
-            var query = "UPDATE Produtos SET Descricao = @Descricao, CodBarra = @CodBarra WHERE IdProduto = @IdProduto";
+            var query = "UPDATE Produtos SET Descricao = @Descricao, CodBarras = @CodBarras WHERE IdProduto = @IdProduto";
             using var connection = new SqlConnection(_connectionString);
-            var affectedRows = await connection.ExecuteAsync(query, produto);
+            var affectedRows = await connection.ExecuteAsync(query, produto.CodBarras);
             return affectedRows;
         }
 
         public static async Task<List<Produtos>> ConsultarPorDescricaoAsync(string descricao)
         {
             if (string.IsNullOrWhiteSpace(descricao)) return new List<Produtos>();
-            var query = "SELECT IdProduto, CodBarra, Descricao FROM Produtos WHERE Descricao LIKE @Desc";
+            var query = "SELECT IdProduto, CodBarras, Descricao FROM Produtos WHERE Descricao LIKE @Desc";
             using var connection = new SqlConnection(_connectionString);
             var list = await connection.QueryAsync<Produtos>(query, new { Desc = $"%{descricao}%" });
             return list.AsList();
         }
 
         // Calcula em tempo real o saldo de um produto em cada depósito da empresa.
-        public static async Task<object> ListarQuantidadePorEstoqueAsync(long idProduto)
+        public static async Task<List<ProdutoEstoqueQuantidadeViewModel>> ListarQuantidadePorEstoqueAsync(long idProduto)
         {
-            if (idProduto <= 0) return new List<dynamic>();
+            if (idProduto <= 0) return new List<ProdutoEstoqueQuantidadeViewModel>();
             /* 
                Lógica de Cálculo de Saldo (Balance):
                - Tipos 1 e 4: Entradas de estoque (Sinal Positivo +)
@@ -102,13 +103,14 @@ namespace ApiControleEstoque.Repository
                         SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (2, 3) THEN m.Quantidade ELSE 0 END)) > 0";
 
             using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryAsync<dynamic>(query, new { IdProduto = idProduto });
+            var list = await connection.QueryAsync<ProdutoEstoqueQuantidadeViewModel>(query, new { IdProduto = idProduto });
+            return list.AsList();
         }
 
         // Lista o histórico recente de quem mexeu no produto e onde.
-        public static async Task<object> ListarMovimentacoesRecentesAsync(long idProduto)
+        public static async Task<List<ProdutoMovimentacaoRecenteViewModel>> ListarMovimentacoesRecentesAsync(long idProduto)
         {
-            if (idProduto <= 0) return new List<dynamic>();
+            if (idProduto <= 0) return new List<ProdutoMovimentacaoRecenteViewModel>();
             var query = @"
             SELECT TOP 10 m.IdMovimentacaoEstoque, m.Quantidade, m.DataHora, 
                    tm.Descricao AS TipoMovimentacao, e.Descricao AS EstoqueNome,
@@ -122,19 +124,20 @@ namespace ApiControleEstoque.Repository
             ORDER BY m.DataHora DESC";
 
             using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryAsync<dynamic>(query, new { IdProduto = idProduto });
+            var list = await connection.QueryAsync<ProdutoMovimentacaoRecenteViewModel>(query, new { IdProduto = idProduto });
+            return list.AsList();
         }
 
         // Pesquisa centralizada em ID, Descrição ou Código de Barras (POST).
-        public static async Task<List<Produtos>> ConsultarPorFiltroAsync(long? id, string? codBarra, string? descricao, double? preco)
+        public static async Task<List<Produtos>> ConsultarPorFiltroAsync(long? id, string? codBarras, string? descricao, double? preco)
         {
-            var codBarraLimpo = string.IsNullOrWhiteSpace(codBarra) ? null : codBarra;
+            var codBarraLimpo = string.IsNullOrWhiteSpace(codBarras) ? null : codBarras;
             var descricaoLimpa = string.IsNullOrWhiteSpace(descricao) ? null : descricao;
 
             string query = @"
-                SELECT IdProduto, CodBarra, Descricao FROM Produtos 
+                SELECT IdProduto, CodBarras, Descricao FROM Produtos 
                 WHERE (@Id IS NULL OR IdProduto = @Id)
-                  AND (@CodBarra IS NULL OR CodBarra = @CodBarra)
+                  AND (@CodBarra IS NULL OR CodBarras = @CodBarra)
                   AND (@Descricao IS NULL OR Descricao LIKE '%' + @Descricao + '%')
                   AND (@Preco IS NULL OR Preco = @Preco)";
 
@@ -149,19 +152,19 @@ namespace ApiControleEstoque.Repository
         }
 
         // Pesquisa combinada de descrição E código de barras.
-        public static async Task<List<Produtos>> ConsultarPorDescricaoECodBarrasAsync(string descricao, string codBarra)
+        public static async Task<List<Produtos>> ConsultarPorDescricaoECodBarrasAsync(string descricao, string codBarras)
         {
-            if (string.IsNullOrWhiteSpace(descricao) || string.IsNullOrWhiteSpace(codBarra)) 
+            if (string.IsNullOrWhiteSpace(descricao) || string.IsNullOrWhiteSpace(codBarras)) 
                 return new List<Produtos>();
 
             var query = @"
-                SELECT IdProduto, CodBarra, Descricao FROM Produtos 
-                WHERE Descricao LIKE @Desc AND CodBarra LIKE @Cod";
+                SELECT IdProduto, CodBarras, Descricao FROM Produtos 
+                WHERE Descricao LIKE @Desc AND CodBarras LIKE @Cod";
 
             using var connection = new SqlConnection(_connectionString);
             var list = await connection.QueryAsync<Produtos>(query, new {
                 Desc = $"%{descricao}%",
-                Cod = $"%{codBarra}%"
+                Cod = $"%{codBarras}%"
             });
             return list.AsList();
         }
@@ -171,7 +174,7 @@ namespace ApiControleEstoque.Repository
         {
             if (string.IsNullOrWhiteSpace(query)) return new List<Produtos>();
             var sql = @"
-                SELECT IdProduto, CodBarra, Descricao FROM Produtos 
+                SELECT IdProduto, CodBarras, Descricao FROM Produtos 
                 WHERE Descricao LIKE @Query OR CodBarra LIKE @Query";
 
             using var connection = new SqlConnection(_connectionString);

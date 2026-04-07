@@ -8,7 +8,7 @@ namespace ApiControleEstoque.Models
 
         [Required(ErrorMessage = "O Código de Barras é obrigatório.")]
         [MaxLength(13, ErrorMessage = "O Código de Barras não pode ultrapassar 13 caracteres.")]
-        public string CodBarra { get; set; }
+        public string CodBarras { get; set; }
 
         [Required(ErrorMessage = "A Descrição é obrigatória.")]
         [MaxLength(140, ErrorMessage = "A Descrição não pode ultrapassar 140 caracteres.")]

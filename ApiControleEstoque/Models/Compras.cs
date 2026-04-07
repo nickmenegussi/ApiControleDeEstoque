@@ -19,10 +19,5 @@ namespace ApiControleEstoque.Models
         [Required(ErrorMessage = "A Quantidade é obrigatória.")]
         [Range(1, int.MaxValue, ErrorMessage = "A Quantidade deve ser maior que zero.")]
         public int Quantidade { get; set; }
-
-        // Campos auxiliares mapeados nas consultas com JOIN
-        public string FornecedorNome { get; set; }
-        public string ProdutoDescricao { get; set; }
-        public string CodBarra { get; set; }
     }
 }
