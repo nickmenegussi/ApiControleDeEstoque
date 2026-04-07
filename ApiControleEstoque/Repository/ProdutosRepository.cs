@@ -10,73 +10,178 @@ namespace ApiControleEstoque.Repository
 
         static ProdutosRepository()
         {
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false)
-                .AddJsonFile($"appsettings.{environment}.json", optional: true)
+                .AddJsonFile("appsettings.json")
                 .Build();
             _connectionString = config.GetConnectionString("DefaultConnection") ?? "";
         }
 
-        public static async Task<List<Produto>> GetAllProdutosAsync()
+        public static async Task<List<Produtos>> GetAllProdutosAsync()
         {
-            var query = "SELECT IdProduto, CodBarras, Descricao FROM Produtos";
+            var query = "SELECT IdProduto, CodBarra, Descricao FROM Produtos";
             using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Produto>(query);
+            var list = await connection.QueryAsync<Produtos>(query);
             return list.AsList();
         }
 
-        public static async Task<Produto?> GetByIdAsync(long idProduto)
+        public static async Task<Produtos?> GetByIdAsync(long idProduto)
         {
-            var query = "SELECT IdProduto, CodBarras, Descricao FROM Produtos WHERE IdProduto = @idProduto";
+            if (idProduto <= 0) return null;
+            var query = "SELECT IdProduto, CodBarra, Descricao FROM Produtos WHERE IdProduto = @idProduto";
             using var connection = new SqlConnection(_connectionString);
-            var produto = await connection.QueryFirstOrDefaultAsync<Produto>(query, new { idProduto });
+            var produto = await connection.QueryFirstOrDefaultAsync<Produtos>(query, new { idProduto });
             return produto;
         }
 
-        public static async Task<bool> ExistsCodBarrasAsync(string codBarras, long? idAtual = null)
+        public static async Task<bool> ExistsCodBarraAsync(string codBarra, long? idAtual = null)
         {
-            var query = "SELECT COUNT(1) FROM Produtos WHERE CodBarras = @codBarras";
+            var query = "SELECT COUNT(1) FROM Produtos WHERE CodBarra = @codBarra";
             if (idAtual != null) query += " AND IdProduto != @idAtual";
 
             using var connection = new SqlConnection(_connectionString);
-            var count = await connection.ExecuteScalarAsync<int>(query, new { codBarras, idAtual });
+            var count = await connection.ExecuteScalarAsync<int>(query, new { codBarra, idAtual });
             return count > 0;
         }
 
-        public static async Task<int> CreateProdutoAsync(Produto produto)
+        public static async Task<int> CreateProdutoAsync(Produtos produto)
         {
-            if (string.IsNullOrWhiteSpace(produto.CodBarras) || string.IsNullOrWhiteSpace(produto.Descricao))
+            if (string.IsNullOrWhiteSpace(produto.CodBarra) || string.IsNullOrWhiteSpace(produto.Descricao))
                 return -1; // Dados inválidos
 
-            var existsCodBarras = await ExistsCodBarrasAsync(produto.CodBarras);
+            var existsCodBarra = await ExistsCodBarraAsync(produto.CodBarra);
+            if (existsCodBarra) return 0; // Já existe
 
-            if (existsCodBarras) return 0; // Já existe
-
-            var query = "INSERT INTO Produtos (IdProduto, CodBarras, Descricao) VALUES (@IdProduto, @CodBarras, @Descricao)";
+            var query = "INSERT INTO Produtos (CodBarra, Descricao) VALUES (@CodBarra, @Descricao)";
             using var connection = new SqlConnection(_connectionString);
             return await connection.ExecuteAsync(query, produto);
         }
 
-        public static async Task<int> UpdateProdutoAsync(Produto produto)
+        public static async Task<int> UpdateProdutoAsync(Produtos produto)
         {
-            if (string.IsNullOrWhiteSpace(produto.CodBarras) || string.IsNullOrWhiteSpace(produto.Descricao))
+            if (produto.IdProduto <= 0) return 0;
+            if (string.IsNullOrWhiteSpace(produto.CodBarra) || string.IsNullOrWhiteSpace(produto.Descricao))
                 return -1; // Dados inválidos
 
-            var existsCodBarras = await ExistsCodBarrasAsync(produto.CodBarras, produto.IdProduto);
+            var existsCodBarra = await ExistsCodBarraAsync(produto.CodBarra, produto.IdProduto);
+            if (existsCodBarra) return 0; // Já existe
 
-            if (existsCodBarras) return 0; // Já existe
-
-            var query = "UPDATE Produtos SET Descricao = @Descricao, CodBarras = @CodBarras WHERE IdProduto = @IdProduto";
+            var query = "UPDATE Produtos SET Descricao = @Descricao, CodBarra = @CodBarra WHERE IdProduto = @IdProduto";
             using var connection = new SqlConnection(_connectionString);
             var affectedRows = await connection.ExecuteAsync(query, produto);
             return affectedRows;
         }
 
+        public static async Task<List<Produtos>> ConsultarPorDescricaoAsync(string descricao)
+        {
+            if (string.IsNullOrWhiteSpace(descricao)) return new List<Produtos>();
+            var query = "SELECT IdProduto, CodBarra, Descricao FROM Produtos WHERE Descricao LIKE @Desc";
+            using var connection = new SqlConnection(_connectionString);
+            var list = await connection.QueryAsync<Produtos>(query, new { Desc = $"%{descricao}%" });
+            return list.AsList();
+        }
+
+        // Calcula em tempo real o saldo de um produto em cada depósito da empresa.
+        public static async Task<object> ListarQuantidadePorEstoqueAsync(long idProduto)
+        {
+            if (idProduto <= 0) return new List<dynamic>();
+            /* 
+               Lógica de Cálculo de Saldo (Balance):
+               - Tipos 1 e 4: Entradas de estoque (Sinal Positivo +)
+               - Tipos 2 e 3: Saídas de estoque (Sinal Negativo -)
+            */
+            var query = @"
+                SELECT e.IdEstoque, e.Descricao AS EstoqueNome, 
+                       SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (1, 4) THEN m.Quantidade ELSE 0 END) - 
+                       SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (2, 3) THEN m.Quantidade ELSE 0 END) AS QuantidadeFinal
+                FROM MovimentacoesEstoque m
+                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                WHERE m.IdProduto = @IdProduto
+                GROUP BY e.IdEstoque, e.Descricao
+                HAVING (SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (1, 4) THEN m.Quantidade ELSE 0 END) - 
+                        SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (2, 3) THEN m.Quantidade ELSE 0 END)) > 0";
+
+            using var connection = new SqlConnection(_connectionString);
+            return await connection.QueryAsync<dynamic>(query, new { IdProduto = idProduto });
+        }
+
+        // Lista o histórico recente de quem mexeu no produto e onde.
+        public static async Task<object> ListarMovimentacoesRecentesAsync(long idProduto)
+        {
+            if (idProduto <= 0) return new List<dynamic>();
+            var query = @"
+            SELECT TOP 10 m.IdMovimentacaoEstoque, m.Quantidade, m.DataHora, 
+                   tm.Descricao AS TipoMovimentacao, e.Descricao AS EstoqueNome,
+                   fs.Nome AS SolicitadorNome, fa.Nome AS AutenticadorNome
+            FROM MovimentacoesEstoque m
+            INNER JOIN TiposMovimentacaoEstoque tm ON m.IdTipoMovimentacaoEstoque = tm.IdTipoMovimentacaoEstoque
+            INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+            LEFT JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
+            LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
+            WHERE m.IdProduto = @IdProduto
+            ORDER BY m.DataHora DESC";
+
+            using var connection = new SqlConnection(_connectionString);
+            return await connection.QueryAsync<dynamic>(query, new { IdProduto = idProduto });
+        }
+
+        // Pesquisa centralizada em ID, Descrição ou Código de Barras (POST).
+        public static async Task<List<Produtos>> ConsultarPorFiltroAsync(long? id, string? codBarra, string? descricao, double? preco)
+        {
+            var codBarraLimpo = string.IsNullOrWhiteSpace(codBarra) ? null : codBarra;
+            var descricaoLimpa = string.IsNullOrWhiteSpace(descricao) ? null : descricao;
+
+            string query = @"
+                SELECT IdProduto, CodBarra, Descricao FROM Produtos 
+                WHERE (@Id IS NULL OR IdProduto = @Id)
+                  AND (@CodBarra IS NULL OR CodBarra = @CodBarra)
+                  AND (@Descricao IS NULL OR Descricao LIKE '%' + @Descricao + '%')
+                  AND (@Preco IS NULL OR Preco = @Preco)";
+
+            using var connection = new SqlConnection(_connectionString);
+            var list = await connection.QueryAsync<Produtos>(query, new {
+                Id = id,
+                CodBarra = codBarraLimpo,
+                Descricao = descricaoLimpa,
+                Preco = preco
+            });
+            return list.AsList();
+        }
+
+        // Pesquisa combinada de descrição E código de barras.
+        public static async Task<List<Produtos>> ConsultarPorDescricaoECodBarrasAsync(string descricao, string codBarra)
+        {
+            if (string.IsNullOrWhiteSpace(descricao) || string.IsNullOrWhiteSpace(codBarra)) 
+                return new List<Produtos>();
+
+            var query = @"
+                SELECT IdProduto, CodBarra, Descricao FROM Produtos 
+                WHERE Descricao LIKE @Desc AND CodBarra LIKE @Cod";
+
+            using var connection = new SqlConnection(_connectionString);
+            var list = await connection.QueryAsync<Produtos>(query, new {
+                Desc = $"%{descricao}%",
+                Cod = $"%{codBarra}%"
+            });
+            return list.AsList();
+        }
+
+        // Pesquisa por descrição ou código de barras (POST com PesquisaPadrao).
+        public static async Task<List<Produtos>> ConsultarPorTudoAsync(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query)) return new List<Produtos>();
+            var sql = @"
+                SELECT IdProduto, CodBarra, Descricao FROM Produtos 
+                WHERE Descricao LIKE @Query OR CodBarra LIKE @Query";
+
+            using var connection = new SqlConnection(_connectionString);
+            var list = await connection.QueryAsync<Produtos>(sql, new { Query = $"%{query}%" });
+            return list.AsList();
+        }
+
         public static async Task<int> DeleteProdutoAsync(long idProduto)
         {
-            // Se houver compras vinculadas, o SQL vai barrar por causa da Foreign Key
+            if (idProduto <= 0) return 0;
             var query = "DELETE FROM Produtos WHERE IdProduto = @idProduto";
             using var connection = new SqlConnection(_connectionString);
             var affectedRows = await connection.ExecuteAsync(query, new { idProduto });

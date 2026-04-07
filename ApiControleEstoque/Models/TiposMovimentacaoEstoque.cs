@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ApiControleEstoque.Models
 {
-    public class TiposEstoque
+    public class TiposMovimentacaoEstoque
     {
-        public long IdTipoEstoque { get; set; }
+        public long IdTipoMovimentacaoEstoque { get; set; }
 
         [Required(ErrorMessage = "A Descrição é obrigatória.")]
-        [MaxLength(35, ErrorMessage = "A Descrição não pode ultrapassar 35 caracteres.")]
+        [MaxLength(45, ErrorMessage = "A Descrição não pode ultrapassar 45 caracteres.")]
         public string Descricao { get; set; }
     }
 }

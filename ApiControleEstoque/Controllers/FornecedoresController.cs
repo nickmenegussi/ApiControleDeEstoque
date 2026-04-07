@@ -27,8 +27,10 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
+                if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
+
                 var item = await FornecedoresRepository.GetByIdFornecedorAsync(id);
-                if (item == null) return NotFound("Fornecedor não encontrado.");
+                if (item == null) return NotFound(new { message = "Fornecedor não encontrado." });
                 return Ok(item);
             }
             catch (Exception ex)
@@ -43,7 +45,7 @@ namespace ApiControleEstoque.Controllers
             try
             {
                 var item = await FornecedoresRepository.GetByCNPJAsync(cnpj);
-                if (item == null) return NotFound("Fornecedor não encontrado.");
+                if (item == null) return NotFound(new { message = "Fornecedor não encontrado." });
                 return Ok(item);
             }
             catch (Exception ex)
@@ -58,8 +60,8 @@ namespace ApiControleEstoque.Controllers
             try
             {
                 var result = await FornecedoresRepository.AddAsync(fornecedor);
-                if (result == 0) return BadRequest("CNPJ já cadastrado.");
-                if (result == -1) return BadRequest("Dados inválidos (CNPJ ou Nome vazios).");
+                if (result == 0) return BadRequest(new { message = "CNPJ já cadastrado." });
+                if (result == -1) return BadRequest(new { message = "Dados inválidos (CNPJ ou Nome vazios)." });
                 return Created("", new { message = "Fornecedor cadastrado com sucesso." });
             }
             catch (Exception ex)
@@ -73,10 +75,12 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
+                if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
+
                 fornecedor.IdFornecedor = id;
                 var result = await FornecedoresRepository.UpdateFornecedorAsync(fornecedor);
-                if (result == 0) return BadRequest("CNPJ já cadastrado para outro fornecedor.");
-                if (result == -1) return BadRequest("Dados inválidos.");
+                if (result == 0) return BadRequest(new { message = "CNPJ já cadastrado para outro fornecedor." });
+                if (result == -1) return BadRequest(new { message = "Dados inválidos (CNPJ ou Nome vazios)." });
                 return Ok(new { message = "Fornecedor atualizado com sucesso." });
             }
             catch (Exception ex)
@@ -88,10 +92,12 @@ namespace ApiControleEstoque.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(long id)
         {
+            if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
+
             try
             {
                 var result = await FornecedoresRepository.DeleteFornecedoresByIdAsync(id);
-                if (result == 0) return NotFound("Fornecedor não encontrado.");
+                if (result == 0) return NotFound(new { message = "Fornecedor não encontrado." });
                 return Ok(new { message = "Fornecedor excluído com sucesso." });
             }
             catch (Exception ex)
