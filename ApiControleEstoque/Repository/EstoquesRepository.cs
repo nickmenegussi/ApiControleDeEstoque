@@ -26,7 +26,7 @@ namespace ApiControleEstoque.Repository
                 e.IdTipoEstoque,
                 e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
+            FROM Estoques e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque";
             using var connection = new SqlConnection(_connectionString);
             var listEstoques = await connection.QueryAsync<EstoquesViewModel>(query);
@@ -40,7 +40,7 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
+            FROM Estoques e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.IdEstoque = @id";
             using var connection = new SqlConnection(_connectionString);
@@ -54,7 +54,7 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e     
+            FROM Estoques e     
             INNER JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE te.Descricao LIKE @Desc";
             using var connection = new SqlConnection(_connectionString);
@@ -69,7 +69,7 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
+            FROM Estoques e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.IdTipoEstoque = @IdTipoEstoque";
             using var connection = new SqlConnection(_connectionString);
@@ -78,7 +78,7 @@ namespace ApiControleEstoque.Repository
 
         public static async Task<bool> ExistsDescricaoNoTipoEstoqueAync(string Descricao, long? IdTipoEstoque = null, long? IdEstoque = null)
         {
-            var query = "SELECT COUNT(1) FROM Estoque WHERE Descricao = @Descricao AND IdTipoEstoque = @IdTipoEstoque";
+            var query = "SELECT COUNT(1) FROM Estoques WHERE Descricao = @Descricao AND IdTipoEstoque = @IdTipoEstoque";
 
             if (IdEstoque != null)
                 query += " AND IdEstoque != @IdEstoque";
@@ -96,7 +96,7 @@ namespace ApiControleEstoque.Repository
             if (existsDescricaoNoTipoEstoque) return 0;
 
             var query = @"
-            INSERT INTO Estoque (IdTipoEstoque, Descricao) 
+            INSERT INTO Estoques (IdTipoEstoque, Descricao) 
             VALUES (@IdTipoEstoque, @Descricao)";
 
             using var connection = new SqlConnection(_connectionString);
@@ -113,7 +113,7 @@ namespace ApiControleEstoque.Repository
             if (existsDescricaoNoTipoEstoque) return 0;
 
             var query = @"
-            UPDATE Estoque
+            UPDATE Estoques
             SET IdTipoEstoque = @IdTipoEstoque,
                 Descricao = @Descricao
             WHERE IdEstoque = @IdEstoque";
@@ -129,7 +129,7 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
+            FROM Estoques e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.Descricao LIKE @Desc";
             using var connection = new SqlConnection(_connectionString);
@@ -179,7 +179,7 @@ namespace ApiControleEstoque.Repository
                    SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (2, 3) THEN m.Quantidade ELSE 0 END) AS QuantidadeFinal
             FROM MovimentacoesEstoque m
             INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-            INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
+            INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
             WHERE p.CodBarra = @CodBarra
             GROUP BY e.IdEstoque, e.Descricao, p.CodBarra, p.Descricao
             HAVING (SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (1, 4) THEN m.Quantidade ELSE 0 END) - 
@@ -197,7 +197,7 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao AS Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
+            FROM Estoques e
             INNER JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.IdTipoEstoque = @IdTipoEstoque AND e.Descricao LIKE @Desc";
 
@@ -208,10 +208,12 @@ namespace ApiControleEstoque.Repository
         public static async Task<int> DeleteEstoquesAsync(long IdEstoque)
         {
             if (IdEstoque <= 0) return 0;
-            var query = "DELETE FROM Estoque WHERE IdEstoque = @IdEstoque";
+            var query = "DELETE FROM Estoques WHERE IdEstoque = @IdEstoque";
             using var connection = new SqlConnection(_connectionString);
             var affectedRows = await connection.ExecuteAsync(query, new { IdEstoque });
             return affectedRows;
         }
+    }
+}
     }
 }
