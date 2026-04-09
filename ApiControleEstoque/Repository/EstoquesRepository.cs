@@ -215,5 +215,3 @@ namespace ApiControleEstoque.Repository
         }
     }
 }
-    }
-}
