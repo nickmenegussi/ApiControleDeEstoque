@@ -7,6 +7,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Injeção de Dependência
+builder.Services.AddScoped<ApiControleEstoque.Repository.IMovimentacoesEstoqueRepository, ApiControleEstoque.Repository.MovimentacoesEstoqueRepository>();
+builder.Services.AddScoped<ApiControleEstoque.Services.IMovimentacoesEstoqueService, ApiControleEstoque.Services.MovimentacoesEstoqueService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

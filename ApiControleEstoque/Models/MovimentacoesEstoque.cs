@@ -5,27 +5,30 @@ namespace ApiControleEstoque.Models
 {
     public class MovimentacoesEstoque
     {
+        [Key]
         public long IdMovimentacaoEstoque { get; set; }
 
-        [Required(ErrorMessage = "O Estoque é obrigatório.")]
-        public long IdEstoque { get; set; }
+        [Required]
+        public long? IdEstoque { get; set; }
 
-        [Required(ErrorMessage = "O Tipo de Movimentação é obrigatório.")]
-        public long IdTipoMovimentacaoEstoque { get; set; }
+        [Required]
+        public long? IdTipoMovimentacaoEstoque { get; set; }
 
-        [Required(ErrorMessage = "O Funcionário Solicitador é obrigatório.")]
-        public long IdFuncionarioSolicitador { get; set; }
+        [Required]
+        public long? IdFuncionarioSolicitador { get; set; }
 
-        public long? IdFuncionarioAutenticador { get; set; } // nullable, pois pode ainda não ter sido autenticada
+        public long? IdFuncionarioAutenticador { get; set; }
 
-        [Required(ErrorMessage = "O Produto é obrigatório.")]
-        public long IdProduto { get; set; }
+        [Required]
+        public long? IdProduto { get; set; }
 
-        [Required(ErrorMessage = "A Quantidade é obrigatória.")]
-        [Range(1, int.MaxValue, ErrorMessage = "A Quantidade deve ser maior que zero.")]
-        public int Quantidade { get; set; }
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int? Quantidade { get; set; }
 
-        [Required(ErrorMessage = "A Data/Hora é obrigatória.")]
-        public DateTime DataHora { get; set; }
+        [Required]
+        public DateTime? DataHora { get; set; }
+
+        public string? Observacao { get; set; }
     }
 }
