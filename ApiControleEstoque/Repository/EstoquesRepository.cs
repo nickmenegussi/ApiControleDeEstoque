@@ -5,11 +5,11 @@ using Microsoft.Data.SqlClient;
 
 namespace ApiControleEstoque.Repository
 {
-    public class EstoquesRepository
+    public class EstoqueRepository
     {
         private static readonly string _connectionString;
 
-        static EstoquesRepository()
+        static EstoqueRepository()
         {
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -18,7 +18,7 @@ namespace ApiControleEstoque.Repository
             _connectionString = config.GetConnectionString("DefaultConnection");
         }
 
-        public static async Task<List<EstoquesViewModel>> GetAllEstoquesAsync()
+        public static async Task<List<EstoquesViewModel>> GetAllEstoqueAsync()
         {
             var query = @"
             SELECT 
@@ -26,11 +26,11 @@ namespace ApiControleEstoque.Repository
                 e.IdTipoEstoque,
                 e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoques e
+            FROM Estoque e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque";
             using var connection = new SqlConnection(_connectionString);
-            var listEstoques = await connection.QueryAsync<EstoquesViewModel>(query);
-            return listEstoques.AsList();
+            var listEstoque = await connection.QueryAsync<EstoquesViewModel>(query);
+            return listEstoque.AsList();
         }
 
         public static async Task<EstoquesViewModel?> GetByIdAsync(long id)
@@ -40,21 +40,21 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoques e
+            FROM Estoque e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.IdEstoque = @id";
             using var connection = new SqlConnection(_connectionString);
             return await connection.QueryFirstOrDefaultAsync<EstoquesViewModel>(query, new { id });
         }
 
-        public static async Task<List<EstoquesViewModel>> GetEstoquesByTipoEstoqueAsync(string Descricao)
+        public static async Task<List<EstoquesViewModel>> GetEstoqueByTipoEstoqueAsync(string Descricao)
         {
             if (string.IsNullOrWhiteSpace(Descricao)) return new List<EstoquesViewModel>();
             var query = @"
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoques e     
+            FROM Estoque e     
             INNER JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE te.Descricao LIKE @Desc";
             using var connection = new SqlConnection(_connectionString);
@@ -62,14 +62,14 @@ namespace ApiControleEstoque.Repository
             return list.AsList();
         }
 
-        public static async Task<List<EstoquesViewModel>> GetEstoquesByIdTipoEstoqueAsync(long idTipoEstoque)
+        public static async Task<List<EstoquesViewModel>> GetEstoqueByIdTipoEstoqueAsync(long idTipoEstoque)
         {
             if (idTipoEstoque <= 0) return new List<EstoquesViewModel>();
             var query = @"
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoques e
+            FROM Estoque e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.IdTipoEstoque = @IdTipoEstoque";
             using var connection = new SqlConnection(_connectionString);
@@ -78,7 +78,7 @@ namespace ApiControleEstoque.Repository
 
         public static async Task<bool> ExistsDescricaoNoTipoEstoqueAync(string Descricao, long? IdTipoEstoque = null, long? IdEstoque = null)
         {
-            var query = "SELECT COUNT(1) FROM Estoques WHERE Descricao = @Descricao AND IdTipoEstoque = @IdTipoEstoque";
+            var query = "SELECT COUNT(1) FROM Estoque WHERE Descricao = @Descricao AND IdTipoEstoque = @IdTipoEstoque";
 
             if (IdEstoque != null)
                 query += " AND IdEstoque != @IdEstoque";
@@ -88,7 +88,7 @@ namespace ApiControleEstoque.Repository
             return count > 0;
         }
 
-        public static async Task<int> AddEstoquesAsync(Estoques estoque)
+        public static async Task<int> AddEstoqueAsync(Estoque estoque)
         {
             if (string.IsNullOrWhiteSpace(estoque.Descricao)) return -1;
             var existsDescricaoNoTipoEstoque = await ExistsDescricaoNoTipoEstoqueAync(estoque.Descricao, estoque.IdTipoEstoque);
@@ -96,7 +96,7 @@ namespace ApiControleEstoque.Repository
             if (existsDescricaoNoTipoEstoque) return 0;
 
             var query = @"
-            INSERT INTO Estoques (IdTipoEstoque, Descricao) 
+            INSERT INTO Estoque (IdTipoEstoque, Descricao) 
             VALUES (@IdTipoEstoque, @Descricao)";
 
             using var connection = new SqlConnection(_connectionString);
@@ -104,7 +104,7 @@ namespace ApiControleEstoque.Repository
             return affectedRows;
         }
 
-        public static async Task<int> UpdateEstoquesAsync(Estoques estoque)
+        public static async Task<int> UpdateEstoqueAsync(Estoque estoque)
         {
             if (estoque.IdEstoque <= 0) return 0;
             if (string.IsNullOrWhiteSpace(estoque.Descricao)) return -1;
@@ -113,7 +113,7 @@ namespace ApiControleEstoque.Repository
             if (existsDescricaoNoTipoEstoque) return 0;
 
             var query = @"
-            UPDATE Estoques
+            UPDATE Estoque
             SET IdTipoEstoque = @IdTipoEstoque,
                 Descricao = @Descricao
             WHERE IdEstoque = @IdEstoque";
@@ -122,14 +122,14 @@ namespace ApiControleEstoque.Repository
             return affectedRows;
         }
 
-        public static async Task<List<EstoquesViewModel>> GetEstoquesByDescricaoAsync(string descricao)
+        public static async Task<List<EstoquesViewModel>> GetEstoqueByDescricaoAsync(string descricao)
         {
             if (string.IsNullOrWhiteSpace(descricao)) return new List<EstoquesViewModel>();
             var query = @"
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoques e
+            FROM Estoque e
             LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.Descricao LIKE @Desc";
             using var connection = new SqlConnection(_connectionString);
@@ -179,7 +179,7 @@ namespace ApiControleEstoque.Repository
                    SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (2, 3) THEN m.Quantidade ELSE 0 END) AS QuantidadeFinal
             FROM MovimentacoesEstoque m
             INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-            INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+            INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
             WHERE p.CodBarra = @CodBarra
             GROUP BY e.IdEstoque, e.Descricao, p.CodBarra, p.Descricao
             HAVING (SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (1, 4) THEN m.Quantidade ELSE 0 END) - 
@@ -197,7 +197,7 @@ namespace ApiControleEstoque.Repository
             SELECT 
                 e.IdEstoque, e.IdTipoEstoque, e.Descricao AS Descricao,
                 te.Descricao AS DescricaoTiposEstoque
-            FROM Estoques e
+            FROM Estoque e
             INNER JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
             WHERE e.IdTipoEstoque = @IdTipoEstoque AND e.Descricao LIKE @Desc";
 

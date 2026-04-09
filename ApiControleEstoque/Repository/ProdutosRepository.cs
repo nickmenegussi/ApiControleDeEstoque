@@ -96,7 +96,7 @@ namespace ApiControleEstoque.Repository
                        SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (1, 4) THEN m.Quantidade ELSE 0 END) - 
                        SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (2, 3) THEN m.Quantidade ELSE 0 END) AS QuantidadeFinal
                 FROM MovimentacoesEstoque m
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 WHERE m.IdProduto = @IdProduto
                 GROUP BY e.IdEstoque, e.Descricao
                 HAVING (SUM(CASE WHEN m.IdTipoMovimentacaoEstoque IN (1, 4) THEN m.Quantidade ELSE 0 END) - 
@@ -117,7 +117,7 @@ namespace ApiControleEstoque.Repository
                    fs.Nome AS SolicitadorNome, fa.Nome AS AutenticadorNome
             FROM MovimentacoesEstoque m
             INNER JOIN TiposMovimentacaoEstoque tm ON m.IdTipoMovimentacaoEstoque = tm.IdTipoMovimentacaoEstoque
-            INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+            INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
             LEFT JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
             LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
             WHERE m.IdProduto = @IdProduto

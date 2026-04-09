@@ -40,7 +40,7 @@ namespace ApiControleEstoque.Repository
                 FROM MovimentacoesEstoque m
                 INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
                 LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario";
 
@@ -74,7 +74,7 @@ namespace ApiControleEstoque.Repository
                 FROM MovimentacoesEstoque m
                 INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
                 LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
                 WHERE m.IdEstoque = @idEstoque";
@@ -101,7 +101,7 @@ namespace ApiControleEstoque.Repository
                 FROM MovimentacoesEstoque m
                 INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
                 LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
                 WHERE m.IdProduto = @idProduto";
@@ -127,7 +127,7 @@ namespace ApiControleEstoque.Repository
                 FROM MovimentacoesEstoque m
                 INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
                 LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
                 WHERE m.DataHora BETWEEN @inicio AND @fim";
@@ -153,7 +153,7 @@ namespace ApiControleEstoque.Repository
                 FROM MovimentacoesEstoque m
                 INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
                 LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
                 WHERE (@DataInicio IS NULL OR m.DataHora >= @DataInicio)

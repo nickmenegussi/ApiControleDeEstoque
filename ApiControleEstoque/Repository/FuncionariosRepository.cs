@@ -79,7 +79,7 @@ namespace ApiControleEstoque.Repository
                        p.Descricao AS Produto, e.Descricao AS Estoque, tm.Descricao AS TipoMovimentacao
                 FROM MovimentacoesEstoque m
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoques e ON m.IdEstoque = e.IdEstoque
+                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
                 INNER JOIN TiposMovimentacaoEstoque tm ON m.IdTipoMovimentacaoEstoque = tm.IdTipoMovimentacaoEstoque
                 WHERE m.IdFuncionarioSolicitador = @IdFuncionario 
                    OR m.IdFuncionarioAutenticador = @IdFuncionario
