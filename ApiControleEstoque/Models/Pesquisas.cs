@@ -78,4 +78,46 @@ namespace ApiControleEstoque.Models
         public long IdTipoEstoque { get; set; }
         public string Descricao { get; set; }
     }
+
+    public class FiltroParaMovimentacaoEstoque
+    {
+        public long?     IdEstoque          { get; set; }
+        public long?     IdProduto          { get; set; }
+        public int?      IdTipoMovimentacao { get; set; }
+        public DateTime? DataInicio         { get; set; }
+        public DateTime? DataFim            { get; set; }
+    }
+
+    public class TransferenciaEstoqueRequest
+    {
+        [Required(ErrorMessage = "O Produto é obrigatório.")]
+        public long? IdProduto { get; set; }
+
+        [Required(ErrorMessage = "O Estoque de Origem é obrigatório.")]
+        public long? IdEstoqueOrigem { get; set; }
+
+        [Required(ErrorMessage = "O Estoque de Destino é obrigatório.")]
+        public long? IdEstoqueDestino { get; set; }
+
+        [Required(ErrorMessage = "A Quantidade é obrigatória.")]
+        public int? Quantidade { get; set; }
+
+        public long IdFuncionarioSolicitador { get; set; }
+    }
+
+    public class MovimentacaoProdutoRequest
+    {
+        [Required(ErrorMessage = "O Produto é obrigatório.")]
+        public long? IdProduto { get; set; }
+
+        [Required(ErrorMessage = "O Estoque é obrigatório.")]
+        public long? IdEstoque { get; set; }
+
+        [Required(ErrorMessage = "A Quantidade é obrigatória.")]
+        public int? Quantidade { get; set; }
+
+        public long IdFuncionarioSolicitador { get; set; }
+        
+        public string? Observacao { get; set; }
+    }
 }

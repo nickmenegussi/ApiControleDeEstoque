@@ -163,26 +163,5 @@ namespace ApiControleEstoque.Controllers
                 return StatusCode(500, new { message = "Erro ao atualizar estoque", error = ex.Message });
             }
         }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(long id)
-        {
-            if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
-
-            try
-            {
-                var result = await EstoquesRepository.DeleteEstoquesAsync(id);
-                if (result == 0) return NotFound(new { message = "Estoque não encontrado." });
-                return Ok(new { message = "Estoque excluído com sucesso." });
-            }
-            catch (Exception ex)
-            {
-                if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx && sqlEx.Number == 547 || ex is Microsoft.Data.SqlClient.SqlException seq && seq.Number == 547)
-                {
-                    return BadRequest(new { message = "Não é possível excluir o estoque pois ele possui movimentações ou outros vínculos." });
-                }
-                return StatusCode(500, new { message = "Erro ao excluir estoque", error = ex.Message });
-            }
-        }
     }
 }
