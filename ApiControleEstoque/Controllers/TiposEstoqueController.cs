@@ -52,22 +52,6 @@ namespace ApiControleEstoque.Controllers
             }
         }
 
-        [HttpGet("TiposEstoques/{idTipoEstoque}")]
-        public async Task<IActionResult> ListarEstoquesPorTipo(long idTipoEstoque)
-        {
-            try
-            {
-                if (idTipoEstoque <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
-
-                var list = await EstoquesRepository.GetEstoquesByIdTipoEstoqueAsync(idTipoEstoque);
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erro ao buscar estoques por tipo", error = ex.Message });
-            }
-        }
-
         [HttpPost("descricao")]
         public async Task<IActionResult> ConsultarPorDescricao([FromBody] PesquisaPadrao pesquisa)
         {

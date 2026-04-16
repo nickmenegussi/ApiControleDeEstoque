@@ -79,7 +79,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await ProdutosRepository.ConsultarPorDescricaoAsync(descricao);
+                var list = await ProdutosRepository.SearchAsync(descricao);
                 return Ok(list);
             }
             catch (Exception ex)
@@ -125,7 +125,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await ProdutosRepository.ConsultarPorTudoAsync(pesquisa.Query);
+                var list = await ProdutosRepository.SearchAsync(pesquisa.Query);
                 return Ok(list);
             }
             catch (Exception ex)
@@ -139,7 +139,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await ProdutosRepository.ConsultarPorDescricaoECodBarrasAsync(pesquisa.Descricao, pesquisa.CodBarra);
+                var list = await ProdutosRepository.SearchByFilterAsync(descricao: pesquisa.Descricao, codBarras: pesquisa.CodBarra);
                 return Ok(list);
             }
             catch (Exception ex)

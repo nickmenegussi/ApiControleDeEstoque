@@ -69,16 +69,19 @@ namespace ApiControleEstoque.Repository
 
             var query = "UPDATE Produtos SET Descricao = @Descricao, CodBarras = @CodBarras WHERE IdProduto = @IdProduto";
             using var connection = new SqlConnection(_connectionString);
-            var affectedRows = await connection.ExecuteAsync(query, produto.CodBarras);
+            var affectedRows = await connection.ExecuteAsync(query, produto);
             return affectedRows;
         }
 
-        public static async Task<List<Produtos>> ConsultarPorDescricaoAsync(string descricao)
+        public static async Task<List<Produtos>> SearchAsync(string query)
         {
-            if (string.IsNullOrWhiteSpace(descricao)) return new List<Produtos>();
-            var query = "SELECT IdProduto, CodBarras, Descricao FROM Produtos WHERE Descricao LIKE @Desc";
+            if (string.IsNullOrWhiteSpace(query)) return new List<Produtos>();
+            var sql = @"
+                SELECT IdProduto, CodBarras, Descricao FROM Produtos 
+                WHERE Descricao LIKE @Query OR CodBarras LIKE @Query";
+
             using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Produtos>(query, new { Desc = $"%{descricao}%" });
+            var list = await connection.QueryAsync<Produtos>(sql, new { Query = $"%{query}%" });
             return list.AsList();
         }
 
@@ -129,7 +132,7 @@ namespace ApiControleEstoque.Repository
         }
 
         // Pesquisa centralizada em ID, Descrição ou Código de Barras (POST).
-        public static async Task<List<Produtos>> ConsultarPorFiltroAsync(long? id, string? codBarras, string? descricao, double? preco)
+        public static async Task<List<Produtos>> SearchByFilterAsync(long? id = null, string? codBarras = null, string? descricao = null)
         {
             var codBarraLimpo = string.IsNullOrWhiteSpace(codBarras) ? null : codBarras;
             var descricaoLimpa = string.IsNullOrWhiteSpace(descricao) ? null : descricao;
@@ -138,47 +141,14 @@ namespace ApiControleEstoque.Repository
                 SELECT IdProduto, CodBarras, Descricao FROM Produtos 
                 WHERE (@Id IS NULL OR IdProduto = @Id)
                   AND (@CodBarra IS NULL OR CodBarras = @CodBarra)
-                  AND (@Descricao IS NULL OR Descricao LIKE '%' + @Descricao + '%')
-                  AND (@Preco IS NULL OR Preco = @Preco)";
+                  AND (@Descricao IS NULL OR Descricao LIKE '%' + @Descricao + '%')";
 
             using var connection = new SqlConnection(_connectionString);
             var list = await connection.QueryAsync<Produtos>(query, new {
                 Id = id,
                 CodBarra = codBarraLimpo,
-                Descricao = descricaoLimpa,
-                Preco = preco
+                Descricao = descricaoLimpa
             });
-            return list.AsList();
-        }
-
-        // Pesquisa combinada de descrição E código de barras.
-        public static async Task<List<Produtos>> ConsultarPorDescricaoECodBarrasAsync(string descricao, string codBarras)
-        {
-            if (string.IsNullOrWhiteSpace(descricao) || string.IsNullOrWhiteSpace(codBarras)) 
-                return new List<Produtos>();
-
-            var query = @"
-                SELECT IdProduto, CodBarras, Descricao FROM Produtos 
-                WHERE Descricao LIKE @Desc AND CodBarras LIKE @Cod";
-
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Produtos>(query, new {
-                Desc = $"%{descricao}%",
-                Cod = $"%{codBarras}%"
-            });
-            return list.AsList();
-        }
-
-        // Pesquisa por descrição ou código de barras (POST com PesquisaPadrao).
-        public static async Task<List<Produtos>> ConsultarPorTudoAsync(string query)
-        {
-            if (string.IsNullOrWhiteSpace(query)) return new List<Produtos>();
-            var sql = @"
-                SELECT IdProduto, CodBarras, Descricao FROM Produtos 
-                WHERE Descricao LIKE @Query OR CodBarra LIKE @Query";
-
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Produtos>(sql, new { Query = $"%{query}%" });
             return list.AsList();
         }
 

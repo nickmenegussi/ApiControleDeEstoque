@@ -22,7 +22,7 @@ namespace ApiControleEstoque.Controllers
             }
         }
 
-        [HttpGet("movimentacoes/{idTipoMovimentacaoEstoque}")]
+        [HttpGet("{idTipoMovimentacaoEstoque}")]
         public async Task<IActionResult> ListarMovimentacoesPorTipo(long idTipoMovimentacaoEstoque)
         {
             try
@@ -74,7 +74,7 @@ namespace ApiControleEstoque.Controllers
             try
             {
                 if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
-                tipo.IdTipoMovimentacaoEstoque = (int)id;
+                tipo.IdTipoMovimentacaoEstoque = id;
                 var result = await TiposMovimentacaoEstoqueRepository.UpdateTiposMovimentacaoEstoquesAsync(tipo);
                 if (result == 0) return BadRequest(new { message = "Tipo de movimentação já cadastrado para outro registro." });
                 if (result == -1) return BadRequest(new { message = "Descrição é obrigatória." });

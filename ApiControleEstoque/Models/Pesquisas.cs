@@ -83,7 +83,7 @@ namespace ApiControleEstoque.Models
     {
         public long?     IdEstoque          { get; set; }
         public long?     IdProduto          { get; set; }
-        public int?      IdTipoMovimentacao { get; set; }
+        public int?      IdTipoMovimentacaoEstoque { get; set; }
         public DateTime? DataInicio         { get; set; }
         public DateTime? DataFim            { get; set; }
     }

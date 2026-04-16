@@ -14,7 +14,6 @@ namespace ApiControleEstoque.Repository
     public static class MovimentacoesEstoqueRepository
     {
         private static readonly string _connectionString;
-
         static MovimentacoesEstoqueRepository()
         {
             var config = new ConfigurationBuilder()
@@ -24,29 +23,9 @@ namespace ApiControleEstoque.Repository
             _connectionString = config.GetConnectionString("DefaultConnection") ?? "";
         }
 
-        public static async Task<List<MovimentacoesEstoqueViewModel>> GetAllMovimentacoesAsync()
+        public static async Task<List<MovimentacoesEstoqueViewModel>> GetAllAsync()
         {
-            var query = @"
-                SELECT 
-                    m.IdMovimentacaoEstoque,
-                    m.Quantidade,
-                    m.DataHora AS DataMovimentacao,
-                    t.Descricao AS TipoMovimentacao,
-                    p.Descricao AS ProdutoNome,
-                    e.Descricao AS EstoqueNome,
-                    fs.Nome AS FuncionarioSolicitador,
-                    fa.Nome AS FuncionarioAutenticador,
-                    m.Observacao
-                FROM MovimentacoesEstoque m
-                INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
-                INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
-                INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
-                LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario";
-
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<MovimentacoesEstoqueViewModel>(query);
-            return list.AsList();
+            return await SearchByFilterAsync(new FiltroParaMovimentacaoEstoque());
         }
 
         public static async Task<MovimentacoesEstoque?> GetByIdMovimentacaoAsync(long id)
@@ -57,61 +36,9 @@ namespace ApiControleEstoque.Repository
             return await connection.QueryFirstOrDefaultAsync<MovimentacoesEstoque>(query, new { id });
         }
 
-        public static async Task<List<MovimentacoesEstoqueViewModel>> GetMovimentacoesByEstoqueAsync(long idEstoque)
-        {
-            if (idEstoque <= 0) return new List<MovimentacoesEstoqueViewModel>();
-            var query = @"
-                SELECT 
-                    m.IdMovimentacaoEstoque,
-                    m.Quantidade,
-                    m.DataHora AS DataMovimentacao,
-                    t.Descricao AS TipoMovimentacao,
-                    p.Descricao AS ProdutoNome,
-                    e.Descricao AS EstoqueNome,
-                    fs.Nome AS FuncionarioSolicitador,
-                    fa.Nome AS FuncionarioAutenticador,
-                    m.Observacao
-                FROM MovimentacoesEstoque m
-                INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
-                INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
-                INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
-                LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
-                WHERE m.IdEstoque = @idEstoque";
+        // Redundant search methods removed. Use SearchByFilterAsync below.
 
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<MovimentacoesEstoqueViewModel>(query, new { idEstoque });
-            return list.AsList();
-        }
-
-        public static async Task<List<MovimentacoesEstoqueViewModel>> GetMovimentacoesByProdutoAsync(long idProduto)
-        {
-            if (idProduto <= 0) return new List<MovimentacoesEstoqueViewModel>();
-            var query = @"
-                SELECT 
-                    m.IdMovimentacaoEstoque,
-                    m.Quantidade,
-                    m.DataHora AS DataMovimentacao,
-                    t.Descricao AS TipoMovimentacao,
-                    p.Descricao AS ProdutoNome,
-                    e.Descricao AS EstoqueNome,
-                    fs.Nome AS FuncionarioSolicitador,
-                    fa.Nome AS FuncionarioAutenticador,
-                    m.Observacao
-                FROM MovimentacoesEstoque m
-                INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
-                INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
-                INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
-                LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
-                WHERE m.IdProduto = @idProduto";
-
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<MovimentacoesEstoqueViewModel>(query, new { idProduto });
-            return list.AsList();
-        }
-
-        public static async Task<List<MovimentacoesEstoqueViewModel>> GetMovimentacoesByPeriodoAsync(DateTime inicio, DateTime fim)
+        public static async Task<List<MovimentacoesEstoqueViewModel>> SearchByFilterAsync(FiltroParaMovimentacaoEstoque filtro)
         {
             var query = @"
                 SELECT 
@@ -123,33 +50,7 @@ namespace ApiControleEstoque.Repository
                     e.Descricao AS EstoqueNome,
                     fs.Nome AS FuncionarioSolicitador,
                     fa.Nome AS FuncionarioAutenticador,
-                    m.Observacao
-                FROM MovimentacoesEstoque m
-                INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
-                INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
-                INNER JOIN Estoque e ON m.IdEstoque = e.IdEstoque
-                INNER JOIN Funcionarios fs ON m.IdFuncionarioSolicitador = fs.IdFuncionario
-                LEFT JOIN Funcionarios fa ON m.IdFuncionarioAutenticador = fa.IdFuncionario
-                WHERE m.DataHora BETWEEN @inicio AND @fim";
-
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<MovimentacoesEstoqueViewModel>(query, new { inicio, fim });
-            return list.AsList();
-        }
-
-        public static async Task<List<MovimentacoesEstoqueViewModel>> ConsultarPorTudoAsync(FiltroParaMovimentacaoEstoque filtro)
-        {
-            var query = @"
-                SELECT 
-                    m.IdMovimentacaoEstoque,
-                    m.Quantidade,
-                    m.DataHora AS DataMovimentacao,
-                    t.Descricao AS TipoMovimentacao,
-                    p.Descricao AS ProdutoNome,
-                    e.Descricao AS EstoqueNome,
-                    fs.Nome AS FuncionarioSolicitador,
-                    fa.Nome AS FuncionarioAutenticador,
-                    m.Observacao
+                    m.Descricao
                 FROM MovimentacoesEstoque m
                 INNER JOIN TiposMovimentacaoEstoque t ON m.IdTipoMovimentacaoEstoque = t.IdTipoMovimentacaoEstoque
                 INNER JOIN Produtos p ON m.IdProduto = p.IdProduto
@@ -160,7 +61,8 @@ namespace ApiControleEstoque.Repository
                   AND (@DataFim IS NULL OR m.DataHora <= @DataFim)
                   AND (@IdProduto IS NULL OR m.IdProduto = @IdProduto)
                   AND (@IdEstoque IS NULL OR m.IdEstoque = @IdEstoque)
-                  AND (@IdTipoMovimentacao IS NULL OR m.IdTipoMovimentacaoEstoque = @IdTipoMovimentacao)";
+                  AND (@IdTipoMovimentacaoEstoque IS NULL OR m.IdTipoMovimentacaoEstoque = @IdTipoMovimentacaoEstoque)
+                ORDER BY m.DataHora DESC";
             
             using var connection = new SqlConnection(_connectionString);
             var list = await connection.QueryAsync<MovimentacoesEstoqueViewModel>(query, new { 
@@ -168,7 +70,7 @@ namespace ApiControleEstoque.Repository
                 DataFim = filtro.DataFim,
                 IdProduto = filtro.IdProduto,
                 IdEstoque = filtro.IdEstoque,
-                IdTipoMovimentacao = filtro.IdTipoMovimentacao
+                IdTipoMovimentacaoEstoque = filtro.IdTipoMovimentacaoEstoque
             });
             return list.AsList();
         }
@@ -179,9 +81,9 @@ namespace ApiControleEstoque.Repository
 
             var query = @"
                 INSERT INTO MovimentacoesEstoque 
-                (IdEstoque, IdTipoMovimentacaoEstoque, IdFuncionarioSolicitador, IdFuncionarioAutenticador, IdProduto, Quantidade, DataHora, Observacao)
+                (IdEstoque, IdTipoMovimentacaoEstoque, IdFuncionarioSolicitador, IdFuncionarioAutenticador, IdProduto, Quantidade, DataHora, Descricao)
                 VALUES 
-                (@IdEstoque, @IdTipoMovimentacaoEstoque, @IdFuncionarioSolicitador, @IdFuncionarioAutenticador, @IdProduto, @Quantidade, @DataHora, @Observacao)";
+                (@IdEstoque, @IdTipoMovimentacaoEstoque, @IdFuncionarioSolicitador, @IdFuncionarioAutenticador, @IdProduto, @Quantidade, @DataHora, @Descricao)";
 
             using var connection = new SqlConnection(_connectionString);
             try
@@ -208,7 +110,7 @@ namespace ApiControleEstoque.Repository
                     IdProduto = @IdProduto, 
                     Quantidade = @Quantidade, 
                     DataHora = @DataHora, 
-                    Observacao = @Observacao
+                    Descricao = @Descricao
                 WHERE IdMovimentacaoEstoque = @IdMovimentacaoEstoque";
 
             using var connection = new SqlConnection(_connectionString);
@@ -253,9 +155,9 @@ namespace ApiControleEstoque.Repository
 
             var query = @"
                 INSERT INTO MovimentacoesEstoque 
-                (IdEstoque, IdTipoMovimentacaoEstoque, IdFuncionarioSolicitador, IdProduto, Quantidade, DataHora, Observacao)
+                (IdEstoque, IdTipoMovimentacaoEstoque, IdFuncionarioSolicitador, IdProduto, Quantidade, DataHora, Descricao)
                 VALUES 
-                (@IdEstoque, @IdTipoMovimentacaoEstoque, @IdFuncionarioSolicitador, @IdProduto, @Quantidade, @DataHora, @Observacao)";
+                (@IdEstoque, @IdTipoMovimentacaoEstoque, @IdFuncionarioSolicitador, @IdProduto, @Quantidade, @DataHora, @Descricao)";
 
             using var connection = new SqlConnection(_connectionString);
             try
@@ -267,7 +169,7 @@ namespace ApiControleEstoque.Repository
                     IdProduto = request.IdProduto.Value,
                     Quantidade = request.Quantidade.Value,
                     DataHora = DateTime.Now,
-                    Observacao = request.Observacao ?? ""
+                    Descricao = request.Observacao ?? ""
                 });
             }
             catch (SqlException ex)
@@ -292,8 +194,8 @@ namespace ApiControleEstoque.Repository
             try
             {
                 var query = @"
-                    INSERT INTO MovimentacoesEstoque (IdEstoque, IdTipoMovimentacaoEstoque, IdFuncionarioSolicitador, IdProduto, Quantidade, DataHora, Observacao)
-                    VALUES (@IdEstoque, @IdTipoMovimentacaoEstoque, @IdFuncionarioSolicitador, @IdProduto, @Quantidade, @DataHora, @Observacao)";
+                    INSERT INTO MovimentacoesEstoque (IdEstoque, IdTipoMovimentacaoEstoque, IdFuncionarioSolicitador, IdProduto, Quantidade, DataHora, Descricao)
+                    VALUES (@IdEstoque, @IdTipoMovimentacaoEstoque, @IdFuncionarioSolicitador, @IdProduto, @Quantidade, @DataHora, @Descricao)";
 
                 // Saída (ID 2 = Saída Padrão)
                 await connection.ExecuteAsync(query, new { 
@@ -303,7 +205,7 @@ namespace ApiControleEstoque.Repository
                     IdProduto = request.IdProduto, 
                     Quantidade = request.Quantidade, 
                     DataHora = DateTime.Now,
-                    Observacao = $"Transferência para {request.IdEstoqueDestino}."
+                    Descricao = $"Transferência para {request.IdEstoqueDestino}."
                 }, transaction: transaction);
 
                 // Entrada (ID 1 = Entrada Padrão)
@@ -314,7 +216,7 @@ namespace ApiControleEstoque.Repository
                     IdProduto = request.IdProduto, 
                     Quantidade = request.Quantidade, 
                     DataHora = DateTime.Now,
-                    Observacao = $"Transferência de {request.IdEstoqueOrigem}."
+                    Descricao = $"Transferência de {request.IdEstoqueOrigem}."
                 }, transaction: transaction);
 
                 await transaction.CommitAsync();

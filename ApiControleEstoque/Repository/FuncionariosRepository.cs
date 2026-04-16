@@ -37,39 +37,18 @@ namespace ApiControleEstoque.Repository
             return await connection.QueryFirstOrDefaultAsync<Funcionarios>(query, new { IdFuncionario = idFuncionario });
         }
 
-        public static async Task<Funcionarios?> GetByEmailFuncionarioAsync(string email)
+        public static async Task<Funcionarios?> GetByEmailAsync(string email, bool includePassword = false)
         {
             if (string.IsNullOrWhiteSpace(email)) return null;
-            string query = "SELECT * FROM Funcionarios WHERE Email = @Email";
+            var columns = "IdFuncionario, Nome, Email, Setor";
+            if (includePassword) columns += ", Senha";
+
+            string query = $"SELECT {columns} FROM Funcionarios WHERE Email = @Email";
             using var connection = new SqlConnection(_connectionString);
             return await connection.QueryFirstOrDefaultAsync<Funcionarios>(query, new { Email = email });
         }
 
-        public static async Task<Funcionarios?> GetByEmailAsync(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email)) return null;
-            string query = "SELECT IdFuncionario, Nome, Email, Setor FROM Funcionarios WHERE Email = @Email";
-            using var connection = new SqlConnection(_connectionString);
-            return await connection.QueryFirstOrDefaultAsync<Funcionarios>(query, new { Email = email });
-        }
-
-        public static async Task<List<Funcionarios>> ConsultarPorNomeAsync(string nome)
-        {
-            if (string.IsNullOrWhiteSpace(nome)) return new List<Funcionarios>();
-            string query = "SELECT IdFuncionario, Nome, Email, Setor FROM Funcionarios WHERE Nome LIKE @Nome";
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Funcionarios>(query, new { Nome = $"%{nome}%" });
-            return list.AsList();
-        }
-
-        public static async Task<List<Funcionarios>> ConsultarPorSetorAsync(string setor)
-        {
-            if (string.IsNullOrWhiteSpace(setor)) return new List<Funcionarios>();
-            string query = "SELECT IdFuncionario, Nome, Email, Setor FROM Funcionarios WHERE Setor LIKE @Setor";
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<Funcionarios>(query, new { Setor = $"%{setor}%" });
-            return list.AsList();
-        }
+        // Redundant search methods removed. Use SearchByFilterAsync below.
 
         public static async Task<List<FuncionarioMovimentacaoViewModel>> ListarMovimentacoesDoFuncionarioAsync(long idFuncionario)
         {
@@ -90,7 +69,7 @@ namespace ApiControleEstoque.Repository
             return list.AsList();
         }
 
-        public static async Task<List<Funcionarios>> ConsultarPorFiltroAsync(long? id, string? nome, string? setor, string? email)
+        public static async Task<List<Funcionarios>> SearchByFilterAsync(long? id = null, string? nome = null, string? setor = null, string? email = null)
         {
             var nomeLimpo = string.IsNullOrWhiteSpace(nome) ? null : nome;
             var setorLimpo = string.IsNullOrWhiteSpace(setor) ? null : setor;

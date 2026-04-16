@@ -13,7 +13,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await EstoquesRepository.GetAllEstoquesAsync();
+                var list = await EstoqueRepository.GetAllEstoqueAsync();
                 return Ok(list);
             }
             catch (Exception ex)
@@ -29,7 +29,7 @@ namespace ApiControleEstoque.Controllers
             {
                 if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
-                var item = await EstoquesRepository.GetByIdAsync(id);
+                var item = await EstoqueRepository.GetByIdAsync(id);
                 if (item == null) return NotFound(new { message = "Estoque não encontrado." });
                 return Ok(item);
             }
@@ -46,7 +46,7 @@ namespace ApiControleEstoque.Controllers
             {
                 if (idTipoEstoque <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
-                var list = await EstoquesRepository.GetEstoquesByIdTipoEstoqueAsync(idTipoEstoque);
+                var list = await EstoqueRepository.SearchByFilterAsync(idTipoEstoque: idTipoEstoque);
                 return Ok(list);
             }
             catch (Exception ex)
@@ -60,7 +60,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await EstoquesRepository.GetEstoquesByDescricaoAsync(descricao);
+                var list = await EstoqueRepository.SearchByFilterAsync(descricao: descricao);
                 return Ok(list);
             }
             catch (Exception ex)
@@ -76,7 +76,7 @@ namespace ApiControleEstoque.Controllers
             {
                 if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
-                var result = await EstoquesRepository.GetQuantidadeProdutosNoEstoqueAsync(id);
+                var result = await EstoqueRepository.GetQuantidadeProdutosNoEstoqueAsync(id);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -92,7 +92,7 @@ namespace ApiControleEstoque.Controllers
             {
                 if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
-                var result = await EstoquesRepository.GetMovimentacoesRecentesAsync(id);
+                var result = await EstoqueRepository.GetMovimentacoesRecentesAsync(id);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -106,7 +106,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var result = await EstoquesRepository.GetQuantidadeProdutoEmTodosEstoquesAsync(codBarra);
+                var result = await EstoqueRepository.GetQuantidadeProdutoEmTodosEstoquesAsync(codBarra);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -120,7 +120,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var result = await EstoquesRepository.ConsultarIdTipoEstoqueEstoqueTipoEstoqueAsync(vm);
+                var result = await EstoqueRepository.SearchByFilterAsync(idTipoEstoque: vm.IdTipoEstoque, descricao: vm.Descricao);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -134,7 +134,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var result = await EstoquesRepository.AddEstoquesAsync(estoque);
+                var result = await EstoqueRepository.AddEstoqueAsync(estoque);
                 if (result == 0) return BadRequest(new { message = "Já existe um estoque com esta descrição para este tipo." });
                 if (result == -1) return BadRequest(new { message = "Descrição é obrigatória." });
                 return Created("", new { message = "Estoque cadastrado com sucesso." });
@@ -153,7 +153,7 @@ namespace ApiControleEstoque.Controllers
                 if (id <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
                 estoque.IdEstoque = id;
-                var result = await EstoquesRepository.UpdateEstoquesAsync(estoque);
+                var result = await EstoqueRepository.UpdateEstoqueAsync(estoque);
                 if (result == 0) return BadRequest(new { message = "Já existe um estoque com esta descrição para este tipo." });
                 if (result == -1) return BadRequest(new { message = "Descrição é obrigatória." });
                 return Ok(new { message = "Estoque atualizado com sucesso." });

@@ -24,7 +24,7 @@ namespace ApiControleEstoque.Repository
             if (string.IsNullOrWhiteSpace(senha) || string.IsNullOrWhiteSpace(email)) return null;
 
             using var connection = new SqlConnection(_connectionString);
-            var funcionario = await FuncionariosRepository.GetByEmailFuncionarioAsync(email);
+            var funcionario = await FuncionariosRepository.GetByEmailAsync(email, true);
 
             if (funcionario == null) return null;
 

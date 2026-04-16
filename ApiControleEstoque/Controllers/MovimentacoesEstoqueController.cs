@@ -16,7 +16,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await MovimentacoesEstoqueRepository.GetAllMovimentacoesAsync();
+                var list = await MovimentacoesEstoqueRepository.GetAllAsync();
                 return Ok(list);
             }
             catch (Exception ex)
@@ -50,7 +50,7 @@ namespace ApiControleEstoque.Controllers
             {
                 if (idEstoque <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
-                var list = await MovimentacoesEstoqueRepository.GetMovimentacoesByEstoqueAsync(idEstoque);
+                var list = await MovimentacoesEstoqueRepository.SearchByFilterAsync(new FiltroParaMovimentacaoEstoque { IdEstoque = idEstoque });
                 return Ok(list);
             }
             catch (Exception ex)
@@ -66,7 +66,7 @@ namespace ApiControleEstoque.Controllers
             {
                 if (idProduto <= 0) return BadRequest(new { message = "ID inválido. O ID deve ser maior que zero." });
 
-                var list = await MovimentacoesEstoqueRepository.GetMovimentacoesByProdutoAsync(idProduto);
+                var list = await MovimentacoesEstoqueRepository.SearchByFilterAsync(new FiltroParaMovimentacaoEstoque { IdProduto = idProduto });
                 return Ok(list);
             }
             catch (Exception ex)
@@ -80,7 +80,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await MovimentacoesEstoqueRepository.GetMovimentacoesByPeriodoAsync(dataInicio, dataFim);
+                var list = await MovimentacoesEstoqueRepository.SearchByFilterAsync(new FiltroParaMovimentacaoEstoque { DataInicio = dataInicio, DataFim = dataFim });
                 return Ok(list);
             }
             catch (Exception ex)
@@ -94,7 +94,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await MovimentacoesEstoqueRepository.ConsultarPorTudoAsync(filtro);
+                var list = await MovimentacoesEstoqueRepository.SearchByFilterAsync(filtro);
                 return Ok(list);
             }
             catch (Exception ex)

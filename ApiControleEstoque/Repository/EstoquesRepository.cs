@@ -47,34 +47,7 @@ namespace ApiControleEstoque.Repository
             return await connection.QueryFirstOrDefaultAsync<EstoquesViewModel>(query, new { id });
         }
 
-        public static async Task<List<EstoquesViewModel>> GetEstoqueByTipoEstoqueAsync(string Descricao)
-        {
-            if (string.IsNullOrWhiteSpace(Descricao)) return new List<EstoquesViewModel>();
-            var query = @"
-            SELECT 
-                e.IdEstoque, e.IdTipoEstoque, e.Descricao,
-                te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e     
-            INNER JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
-            WHERE te.Descricao LIKE @Desc";
-            using var connection = new SqlConnection(_connectionString);
-            var list = await connection.QueryAsync<EstoquesViewModel>(query, new { Desc = $"%{Descricao}%" });
-            return list.AsList();
-        }
-
-        public static async Task<List<EstoquesViewModel>> GetEstoqueByIdTipoEstoqueAsync(long idTipoEstoque)
-        {
-            if (idTipoEstoque <= 0) return new List<EstoquesViewModel>();
-            var query = @"
-            SELECT 
-                e.IdEstoque, e.IdTipoEstoque, e.Descricao,
-                te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
-            LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
-            WHERE e.IdTipoEstoque = @IdTipoEstoque";
-            using var connection = new SqlConnection(_connectionString);
-            return (await connection.QueryAsync<EstoquesViewModel>(query, new { IdTipoEstoque = idTipoEstoque })).AsList();
-        }
+        // Redundant search methods removed. Use SearchByFilterAsync below.
 
         public static async Task<bool> ExistsDescricaoNoTipoEstoqueAync(string Descricao, long? IdTipoEstoque = null, long? IdEstoque = null)
         {
@@ -88,7 +61,7 @@ namespace ApiControleEstoque.Repository
             return count > 0;
         }
 
-        public static async Task<int> AddEstoqueAsync(Estoque estoque)
+        public static async Task<int> AddEstoqueAsync(Estoques estoque)
         {
             if (string.IsNullOrWhiteSpace(estoque.Descricao)) return -1;
             var existsDescricaoNoTipoEstoque = await ExistsDescricaoNoTipoEstoqueAync(estoque.Descricao, estoque.IdTipoEstoque);
@@ -104,7 +77,7 @@ namespace ApiControleEstoque.Repository
             return affectedRows;
         }
 
-        public static async Task<int> UpdateEstoqueAsync(Estoque estoque)
+        public static async Task<int> UpdateEstoqueAsync(Estoques estoque)
         {
             if (estoque.IdEstoque <= 0) return 0;
             if (string.IsNullOrWhiteSpace(estoque.Descricao)) return -1;
@@ -122,19 +95,7 @@ namespace ApiControleEstoque.Repository
             return affectedRows;
         }
 
-        public static async Task<List<EstoquesViewModel>> GetEstoqueByDescricaoAsync(string descricao)
-        {
-            if (string.IsNullOrWhiteSpace(descricao)) return new List<EstoquesViewModel>();
-            var query = @"
-            SELECT 
-                e.IdEstoque, e.IdTipoEstoque, e.Descricao,
-                te.Descricao AS DescricaoTiposEstoque
-            FROM Estoque e
-            LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
-            WHERE e.Descricao LIKE @Desc";
-            using var connection = new SqlConnection(_connectionString);
-            return (await connection.QueryAsync<EstoquesViewModel>(query, new { Desc = $"%{descricao}%" })).AsList();
-        }
+        // Redundant search methods removed. Use SearchByFilterAsync below.
 
         public static async Task<object> GetQuantidadeProdutosNoEstoqueAsync(long idEstoque)
         {
@@ -189,20 +150,25 @@ namespace ApiControleEstoque.Repository
             return await connection.QueryAsync<dynamic>(query, new { CodBarra = codBarra });
         }
 
-        public static async Task<List<EstoquesViewModel>> ConsultarIdTipoEstoqueEstoqueTipoEstoqueAsync(PesquisaEstoque vm)
+        public static async Task<List<EstoquesViewModel>> SearchByFilterAsync(long? idTipoEstoque = null, string? descricao = null, string? tipoEstoqueNome = null)
         {
-            if (vm == null || string.IsNullOrWhiteSpace(vm.Descricao) || vm.IdTipoEstoque <= 0) 
-                return new List<EstoquesViewModel>();
             var query = @"
             SELECT 
-                e.IdEstoque, e.IdTipoEstoque, e.Descricao AS Descricao,
+                e.IdEstoque, e.IdTipoEstoque, e.Descricao,
                 te.Descricao AS DescricaoTiposEstoque
             FROM Estoque e
-            INNER JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
-            WHERE e.IdTipoEstoque = @IdTipoEstoque AND e.Descricao LIKE @Desc";
+            LEFT JOIN TiposEstoque te ON e.IdTipoEstoque = te.IdTipoEstoque
+            WHERE (@IdTipoEstoque IS NULL OR e.IdTipoEstoque = @IdTipoEstoque)
+              AND (@Descricao IS NULL OR e.Descricao LIKE '%' + @Descricao + '%')
+              AND (@TipoEstoqueNome IS NULL OR te.Descricao LIKE '%' + @TipoEstoqueNome + '%')";
 
             using var connection = new SqlConnection(_connectionString);
-            return (await connection.QueryAsync<EstoquesViewModel>(query, new { IdTipoEstoque = vm.IdTipoEstoque, Desc = $"%{vm.Descricao}%" })).AsList();
+            var list = await connection.QueryAsync<EstoquesViewModel>(query, new { 
+                IdTipoEstoque = idTipoEstoque, 
+                Descricao = string.IsNullOrWhiteSpace(descricao) ? null : descricao,
+                TipoEstoqueNome = string.IsNullOrWhiteSpace(tipoEstoqueNome) ? null : tipoEstoqueNome
+            });
+            return list.AsList();
         }
 
         

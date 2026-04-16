@@ -44,7 +44,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await FuncionariosRepository.ConsultarPorNomeAsync(nome);
+                var list = await FuncionariosRepository.SearchByFilterAsync(nome: nome);
                 return Ok(list);
             }
             catch (Exception ex)
@@ -58,7 +58,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await FuncionariosRepository.ConsultarPorSetorAsync(setor);
+                var list = await FuncionariosRepository.SearchByFilterAsync(setor: setor);
                 return Ok(list);
             }
             catch (Exception ex)
@@ -103,7 +103,7 @@ namespace ApiControleEstoque.Controllers
         {
             try
             {
-                var list = await FuncionariosRepository.ConsultarPorFiltroAsync(pesquisa.Id, pesquisa.Nome, pesquisa.Setor, pesquisa.Email);
+                var list = await FuncionariosRepository.SearchByFilterAsync(pesquisa.Id, pesquisa.Nome, pesquisa.Setor, pesquisa.Email);
                 return Ok(list);
             }
             catch (Exception ex)
